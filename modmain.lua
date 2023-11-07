@@ -14,10 +14,10 @@ end
 
 local GLOBAL_POSITIONS = "workshop-378160973"
 local SHOW_ME = "ShowMeSHint"
-local Patch = require("patcher")
+local Patcher = require("patcher")
 
 AddSimPostInit(function()
-    Patch(GLOBAL_POSITIONS, "Ping", function(_, pingtype, x, y, z)
+    Patcher.Patch(GLOBAL_POSITIONS, "Ping", function(_, pingtype, x, y, z)
         if not checkstring(pingtype) or not checknumber(x) or not checknumber(y) or not checknumber(z) then
             return "Invalid data types."
         end
@@ -30,9 +30,17 @@ AddSimPostInit(function()
         end
     end)
 
-    Patch(SHOW_ME, "Hint", function(_, guid, item)
+    Patcher.Patch(SHOW_ME, "Hint", function(_, guid, item)
         if not checknumber(guid) or not checkentity(item) then
             return "Invalid data types."
+        end
+    end)
+
+    Patcher.HookAllHandlers(function(namespace, rpc_name, player, oldfn, ...)
+        local status, result = pcall(oldfn, player, ...)
+        if not status then
+            local display_name = player.name .. " (" .. player.userid .. ")"
+            print("RPC Patcher: RPC " .. rpc_name .. " from namespace " .. namespace .. " from " .. display_name .. " errored. Error: " .. tostring(result))
         end
     end)
 end)

@@ -1,4 +1,6 @@
-function Patch(namespace, name, fn)
+local Patcher = {}
+
+function Patcher.Patch(namespace, name, fn)
     print("Patching RPC " .. name .. " in namespace " .. namespace .. ".")
     if MOD_RPC[namespace] == nil then
         print("RPC Patcher: Mod namespace " .. namespace .. " does not exist.")
@@ -33,4 +35,19 @@ function Patch(namespace, name, fn)
     end
 end
 
-return Patch
+function Patcher.HookAllHandlers(fn)
+    for namespace, rpcs in pairs(MOD_RPC) do
+        if MOD_RPC_HANDLERS[namespace] ~= nil then
+            for rpc_name, rpc_info in pairs(rpcs) do
+                local oldfn = MOD_RPC_HANDLERS[namespace][rpc_info.id]
+                if oldfn ~= nil then
+                    MOD_RPC_HANDLERS[namespace][rpc_info.id] = function(player, ...)
+                        fn(namespace, rpc_name, player, oldfn, ...)
+                    end
+                end
+            end
+        end
+    end
+end
+
+return Patcher
